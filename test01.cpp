@@ -5,6 +5,7 @@
 #define DEVICENAME "/dev/ttyS2"
 #define PROTOCOL 1.0
 
+// test git push
 // Servo Dynamixel XL430-W250
 #define SERVO_ID 0X02
 #define SERVO_REG_ID 7 // RW 8u
