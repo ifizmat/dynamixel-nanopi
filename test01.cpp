@@ -22,42 +22,52 @@
 dynamixel::PortHandler *portHandler;
 dynamixel::PacketHandler *packetHandler;
 
+void portDebugInfo(dynamixel::PortHandler *portHandler, dynamixel::PacketHandler *packetHandler);
+void ledDebugInfo(std::string message, dynamixel::PortHandler *portHandler, dynamixel::PacketHandler *packetHandler);
+
 int main() {
   using namespace std;
   uint8_t dxl_error = 0;
-  uint8_t statusLED = 0;
-  int com_result = 0;
+
   cout << "\nTest 01. Work by Firstname Secondname!\n";
   
   portHandler = dynamixel::PortHandler::getPortHandler(DEVICENAME);
   packetHandler = dynamixel::PacketHandler::getPacketHandler(PROTOCOL);
 
-  cout << "portHandler: " << portHandler << endl;
-  
-  bool isPortOpened = portHandler->openPort();
-  cout << "Port: " << DEVICENAME << endl;
-  cout << "Is Port Opened: " << boolalpha << isPortOpened << endl;
-  
-  int baudRate = portHandler->getBaudRate();
-  cout << "Baudrate: " << baudRate << endl;
+  portDebugInfo(portHandler, packetHandler);
 
   packetHandler->write1ByteTxRx(portHandler, SERVO_ID, SERVO_REG_LED_STATUS, LED_OFF, &dxl_error);
-  cout << "LED Off error code: " << hex << (int)dxl_error << endl;
-  com_result = packetHandler->read1ByteTxRx(portHandler, SERVO_ID, SERVO_REG_LED_STATUS, &statusLED, &dxl_error); 
-  cout << "LED status: " << hex << (int)statusLED << endl;
-  cout << "LED status reading com_result: " << dec << com_result << endl;
-  cout << "Result: " << packetHandler->getTxRxResult(com_result) << endl;
+  ledDebugInfo("LED Off error code: ", portHandler, packetHandler);
   sleep(2);
 
   packetHandler->write1ByteTxRx(portHandler, SERVO_ID, SERVO_REG_LED_STATUS, LED_ON, &dxl_error);
-  cout << "LED On error code: " << hex << dxl_error << endl;
-  com_result = packetHandler->read1ByteTxRx(portHandler, SERVO_ID, SERVO_REG_LED_STATUS, &statusLED, &dxl_error); 
-  cout << "LED status: " << hex << statusLED << endl;
-  cout << "LED status reading com_result: " << dec << com_result << endl;
-  cout << "Result: " << packetHandler->getTxRxResult(com_result) << endl;
+  ledDebugInfo("LED On error code: ", portHandler, packetHandler);
   sleep(2);
 
   portHandler->closePort();
   cout << "CLOSED PORT..." << endl;
   return 0;
+}
+
+void ledDebugInfo(std::string message, dynamixel::PortHandler *portHandler, dynamixel::PacketHandler *packetHandler) {
+  uint8_t dxl_error = 0;
+  uint8_t statusLED = 0;
+  int com_result = 0;
+  std::cout << message << std::hex << (int)dxl_error << std::endl;
+  com_result = packetHandler->read1ByteTxRx(portHandler, SERVO_ID, SERVO_REG_LED_STATUS, &statusLED, &dxl_error); 
+  std::cout << "LED status: " << std::hex << (int)statusLED << std::endl;
+  std::cout << "LED status reading com_result: " << std::dec << com_result << std::endl;
+  std::cout << "Result: " << packetHandler->getTxRxResult(com_result) << std::endl;
+  packetHandler->write1ByteTxRx(portHandler, SERVO_ID, SERVO_REG_LED_STATUS, LED_OFF, &dxl_error);
+}
+
+void portDebugInfo(dynamixel::PortHandler *portHandler, dynamixel::PacketHandler *packetHandler) {
+  std::cout << "portHandler: " << portHandler << std::endl;
+  
+  bool isPortOpened = portHandler->openPort();
+  std::cout << "Port: " << DEVICENAME << std::endl;
+  std::cout << "Is Port Opened: " << std::boolalpha << isPortOpened << std::endl;
+  
+  int baudRate = portHandler->getBaudRate();
+  std::cout << "Baudrate: " << baudRate << std::endl;
 }
