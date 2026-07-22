@@ -4,7 +4,7 @@
 #include "dynamixel_sdk.h"
 
 #define DEVICENAME "/dev/ttyS2"
-#define PROTOCOL 1.0
+#define PROTOCOL_VERSION 2.0
 
 // test git push
 // Servo Dynamixel XL430-W250
@@ -33,7 +33,7 @@ int main() {
   cout << "\nTest 01. Work by Firstname Secondname!\n";
   
   portHandler = dynamixel::PortHandler::getPortHandler(DEVICENAME);
-  packetHandler = dynamixel::PacketHandler::getPacketHandler(PROTOCOL);
+  packetHandler = dynamixel::PacketHandler::getPacketHandler(PROTOCOL_VERSION);
 
   portDebugInfo(portHandler, packetHandler);
 
@@ -57,9 +57,9 @@ void ledDebugInfo(std::string message, dynamixel::PortHandler *portHandler, dyna
   uint8_t dxl_error = 0;
   uint8_t statusLED = 0;
   int com_result = 0;
-  std::cout << message << std::hex << (int)dxl_error << std::endl;
   com_result = packetHandler->read1ByteTxRx(portHandler, SERVO_ID, SERVO_REG_LED_STATUS, &statusLED, &dxl_error); 
   std::cout << "LED status: " << std::hex << (int)statusLED << std::endl;
+  std::cout << message << std::hex << (int)dxl_error << std::endl;
   std::cout << "LED status reading com_result: " << std::dec << com_result << std::endl;
   std::cout << "Result: " << packetHandler->getTxRxResult(com_result) << std::endl;
 }
