@@ -62,7 +62,6 @@ void ledDebugInfo(std::string message, dynamixel::PortHandler *portHandler, dyna
   std::cout << "LED status: " << std::hex << (int)statusLED << std::endl;
   std::cout << "LED status reading com_result: " << std::dec << com_result << std::endl;
   std::cout << "Result: " << packetHandler->getTxRxResult(com_result) << std::endl;
-  packetHandler->write1ByteTxRx(portHandler, SERVO_ID, SERVO_REG_LED_STATUS, LED_OFF, &dxl_error);
 }
 
 void portDebugInfo(dynamixel::PortHandler *portHandler, dynamixel::PacketHandler *packetHandler) {
