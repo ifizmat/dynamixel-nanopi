@@ -11,6 +11,7 @@
 #define SERVO_ID 0X02
 #define LED_OFF 0
 #define LED_ON  1
+#define LED_BLINK_COUNT 4
 #define SERVO_REG_ID 7 // RW 8u
 #define SERVO_REG_BAUDRATE 8 // RW 8u
 #define SERVO_OPERATING_MODE 11 // RW 8u
@@ -36,14 +37,17 @@ int main() {
 
   portDebugInfo(portHandler, packetHandler);
 
-  packetHandler->write1ByteTxRx(portHandler, SERVO_ID, SERVO_REG_LED_STATUS, LED_OFF, &dxl_error);
-  ledDebugInfo("LED Off error code: ", portHandler, packetHandler);
-  sleep(2);
+  for (int i=0; i<LED_BLINK_COUNT; i++) {
+    cout << "\nNumber blink: " << i+1 << endl;
+    packetHandler->write1ByteTxRx(portHandler, SERVO_ID, SERVO_REG_LED_STATUS, LED_OFF, &dxl_error);
+    ledDebugInfo("LED Off error code: ", portHandler, packetHandler);
+    sleep(2);
 
-  packetHandler->write1ByteTxRx(portHandler, SERVO_ID, SERVO_REG_LED_STATUS, LED_ON, &dxl_error);
-  ledDebugInfo("LED On error code: ", portHandler, packetHandler);
-  sleep(2);
-
+    packetHandler->write1ByteTxRx(portHandler, SERVO_ID, SERVO_REG_LED_STATUS, LED_ON, &dxl_error);
+    ledDebugInfo("LED On error code: ", portHandler, packetHandler);
+    sleep(2);
+    cout << "====================\n";
+  }
   portHandler->closePort();
   cout << "CLOSED PORT..." << endl;
   return 0;
