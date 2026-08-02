@@ -21,21 +21,28 @@ SERVO_REG_TORQUE_ENABLE = 64 # RW 8u
 SERVO_REG_LED_STATUS = 65 # RW 8u
 
 is_port_opened = False
-print("Work by Firstname Secondname!")
 
-portHandler = PortHandler(DEVICENAME)
-# portHandler.setBaudRate(BAUDRATE)
-packetHandler = PacketHandler(PROTOCOL_VERSION)
+    
+def main():
+    print("Work by Firstname Secondname!")
+    portHandler = PortHandler(DEVICENAME)
+    portHandler.setBaudRate(BAUDRATE)
+    packetHandler = PacketHandler(PROTOCOL_VERSION)
+    
+    is_port_opened = portHandler.openPort()
+    
+    port_debug_info(portHandler)    
+    portHandler.closePort()
 
 
-print(f'portHandler: {portHandler}')
-# is_port_opened = portHandler.openPort()
-print(f'Port: {DEVICENAME}')
-print(f'Is Port Opened: {is_port_opened}')
-baudrate = portHandler.getBaudRate()
-print(f'Baudrate: {baudrate}')
+def port_debug_info(portHandler):
+    print(f'portHandler: {portHandler}')
+    print(f'Port: {DEVICENAME}')
+    print(f'Is Port Opened: {is_port_opened}')
+    baudrate = portHandler.getBaudRate()
+    print(f'Baudrate: {baudrate}')
 
-# portHandler.openPort()
 
-# portHandler.closePort()
-
+if __name__ == "__main__":
+    main()
+    
