@@ -3,6 +3,7 @@
 
 import fcntl
 import struct
+import termios                                                                                          
 from dynamixel_sdk import *
 
 BAUDRATE = 57600
@@ -29,6 +30,7 @@ def main():
     global is_port_opened
     print("Work by Firstname Secondname!")
     portHandler = PortHandler(DEVICENAME)
+
     packetHandler = PacketHandler(PROTOCOL_VERSION)
     
     is_port_opened = portHandler.openPort()
@@ -45,6 +47,33 @@ def main():
         try:
             fcntl.ioctl(portHandler.ser.fd, TIOCSRS485, rs485_struct)
             print(f'[OK] RS485 mode enabled')
+            
+            attrs = termios.tcgetattr(portHandler.ser.fd)
+            # c_iflag: IGNPAR - Ignore parity errors, if - input flag
+            attrs[0] = termios.IGNPAR
+            
+            # c_oflag: 0, of - output flag
+            attrs[1] = 0
+            
+            # c_cflag: boadrate | CS8 | CLOCAL | CREAD, cf - control flags
+            attrs[2] = termios.B57600 | termios.CS8 | termios.CLOCAL | termios.CREAD
+            
+            # c_lflag: 0 (turn off echo and processing), lf - local flags
+            attrs[3] = 0
+            
+            # ispeed, ospeed - boadrate
+            attrs[4] = termios.B57600
+            attrs[5] = termios.B57600
+            
+            # cc: VTIME = 0, VMIN = 0, cc - control chars
+            attrs[6][termios.VTIME] = 0
+            attrs[6][termios.VMIN] = 0
+            
+            # Apply settings through TCSANOW (as in the C++ SDK)
+            termios.tcsetattr(portHandler.ser.fd, termios.TCSANOW, attrs)
+            print('[OK] termios settigs applied (IGNPAR, TCSANOW)')
+            
+            
         except Exception as e:
             print(f'[WARNING] Failed to set RS485 mode: {e}')
         
@@ -77,3 +106,4 @@ def port_debug_info(portHandler):
 
 if __name__ == "__main__":
     main()
+    
