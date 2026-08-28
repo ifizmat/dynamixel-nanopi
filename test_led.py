@@ -86,8 +86,21 @@ def main():
             print(f'[WARNING] Failed to set RS485 mode: {e}')
         
     
-    port_debug_info(portHandler)    
-    led_debug_info('LED Off error code: ', portHandler, packetHandler)
+    port_debug_info(portHandler)
+
+    for i in range(LED_BLINK_COUNT):
+        print(f'\nBlink {i+1}/{LED_BLINK_COUNT}')    
+        packetHandler.write1ByteTxRx(portHandler, SERVO_ID, SERVO_REG_LED_STATUS, LED_ON)
+        print("    LED: On")
+        led_debug_info('LED On error code: ', portHandler, packetHandler)
+        time.sleep(1)
+        
+        packetHandler.write1ByteTxRx(portHandler, SERVO_ID, SERVO_REG_LED_STATUS, LED_OFF)
+        print("    LED: Off")
+        led_debug_info('LED Off error code: ', portHandler, packetHandler)
+        time.sleep(1)
+    
+    print("\n[OK] LED blinking completed")
     portHandler.closePort()
 
 
