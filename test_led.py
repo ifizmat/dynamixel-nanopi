@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import time
 import fcntl
 import struct
 import termios                                                                                          
@@ -48,6 +49,9 @@ def main():
             fcntl.ioctl(portHandler.ser.fd, TIOCSRS485, rs485_struct)
             print(f'[OK] RS485 mode enabled')
             
+            # A small delay to stabilize the RS485 transceiver
+            time.sleep(0.1) # 100 ms
+            
             attrs = termios.tcgetattr(portHandler.ser.fd)
             # c_iflag: IGNPAR - Ignore parity errors, if - input flag
             attrs[0] = termios.IGNPAR
@@ -73,6 +77,10 @@ def main():
             termios.tcsetattr(portHandler.ser.fd, termios.TCSANOW, attrs)
             print('[OK] termios settigs applied (IGNPAR, TCSANOW)')
             
+            # Explicitly clearing the input buffer of garbage from previous runs
+            termios.tcflush(portHandler.ser.fd, termios.TCIFLUSH)
+            print('[OK] Input buffer flushed')
+            
             
         except Exception as e:
             print(f'[WARNING] Failed to set RS485 mode: {e}')
@@ -87,6 +95,10 @@ def led_debug_info(message, portHandler, packetHandler):
     dxl_error = 0
     status_led = 0
     dxl_comm_result = 0
+    
+    # Double flushing the buffer before sending a packet
+    termios.tcflush(portHandler.ser.fd, termios.TCIFLUSH)
+    
     status_led, dxl_comm_result, dxl_error = packetHandler.read1ByteTxRx(portHandler, SERVO_ID, SERVO_REG_LED_STATUS)
     print(f'LED status: {status_led}')
     print(f'message {dxl_error}')
