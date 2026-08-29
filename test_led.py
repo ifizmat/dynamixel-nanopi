@@ -28,80 +28,17 @@ is_port_opened = False
 
     
 def main():
-    global is_port_opened
     print("Work by Firstname Secondname!")
     portHandler = PortHandler(DEVICENAME)
-
     packetHandler = PacketHandler(PROTOCOL_VERSION)
-    
-    is_port_opened = portHandler.openPort()
+    init_port(portHandler, packetHandler)
 
     if is_port_opened:
-        portHandler.setBaudRate(BAUDRATE)
-        # Clearly down DTR/RTS
-        portHandler.ser.dtr = False        
-        portHandler.ser.rts = False        
-
-        # Set mode RS485 through ioctl
-        TIOCSRS485 = 0x542F
-        rs485_struct = struct.pack('IIIIIIII', 0X0001, 0, 0, 0, 0, 0, 0, 0)
-        try:
-            fcntl.ioctl(portHandler.ser.fd, TIOCSRS485, rs485_struct)
-            print(f'[OK] RS485 mode enabled')
-            
-            # A small delay to stabilize the RS485 transceiver
-            time.sleep(0.1) # 100 ms
-            
-            attrs = termios.tcgetattr(portHandler.ser.fd)
-            # c_iflag: IGNPAR - Ignore parity errors, if - input flag
-            attrs[0] = termios.IGNPAR
-            
-            # c_oflag: 0, of - output flag
-            attrs[1] = 0
-            
-            # c_cflag: boadrate | CS8 | CLOCAL | CREAD, cf - control flags
-            attrs[2] = termios.B57600 | termios.CS8 | termios.CLOCAL | termios.CREAD
-            
-            # c_lflag: 0 (turn off echo and processing), lf - local flags
-            attrs[3] = 0
-            
-            # ispeed, ospeed - boadrate
-            attrs[4] = termios.B57600
-            attrs[5] = termios.B57600
-            
-            # cc: VTIME = 0, VMIN = 0, cc - control chars
-            attrs[6][termios.VTIME] = 0
-            attrs[6][termios.VMIN] = 0
-            
-            # Apply settings through TCSANOW (as in the C++ SDK)
-            termios.tcsetattr(portHandler.ser.fd, termios.TCSANOW, attrs)
-            print('[OK] termios settigs applied (IGNPAR, TCSANOW)')
-            
-            # Explicitly clearing the input buffer of garbage from previous runs
-            termios.tcflush(portHandler.ser.fd, termios.TCIFLUSH)
-            print('[OK] Input buffer flushed')
-            
-            
-        except Exception as e:
-            print(f'[WARNING] Failed to set RS485 mode: {e}')
-        
-    
-    port_debug_info(portHandler)
-
-    for i in range(LED_BLINK_COUNT):
-        print(f'\nBlink {i+1}/{LED_BLINK_COUNT}')    
-        packetHandler.write1ByteTxRx(portHandler, SERVO_ID, SERVO_REG_LED_STATUS, LED_ON)
-        print("    LED: On")
-        led_debug_info('LED On error code: ', portHandler, packetHandler)
-        time.sleep(1)
-        
-        packetHandler.write1ByteTxRx(portHandler, SERVO_ID, SERVO_REG_LED_STATUS, LED_OFF)
-        print("    LED: Off")
+        port_debug_info(portHandler)
         led_debug_info('LED Off error code: ', portHandler, packetHandler)
-        time.sleep(1)
-    
-    print("\n[OK] LED blinking completed")
-    portHandler.closePort()
+        blink_led(portHandler, packetHandler, LED_BLINK_COUNT)
+        print("\n[OK] LED blinking completed")
+        portHandler.closePort()
 
 
 def led_debug_info(message, portHandler, packetHandler):
@@ -128,6 +65,76 @@ def port_debug_info(portHandler):
     print(f'DTR: {portHandler.ser.dtr}')
     print(f'RTS: {portHandler.ser.rts}')
 
+
+def init_port(portHandler, packetHandler):
+    """Port initialization: opening, speed, RS485, termios settings"""
+    global is_port_opened
+    
+    is_port_opened = portHandler.openPort()
+
+    if is_port_opened:
+        portHandler.setBaudRate(BAUDRATE)
+        # Clearly down DTR/RTS
+        portHandler.ser.dtr = False        
+        portHandler.ser.rts = False        
+
+        # Set mode RS485 through ioctl
+        TIOCSRS485 = 0x542F
+        rs485_struct = struct.pack('IIIIIIII', 0X0001, 0, 0, 0, 0, 0, 0, 0)
+        try:
+            fcntl.ioctl(portHandler.ser.fd, TIOCSRS485, rs485_struct)
+            print(f'[OK] RS485 mode enabled')
+            
+            # A small delay to stabilize the RS485 transceiver
+            # time.sleep(0.1) # 100 ms
+        except Exception as e:
+            print(f'[WARNING] Failed to set RS485 mode: {e}')
+            
+        attrs = termios.tcgetattr(portHandler.ser.fd)
+        # c_iflag: IGNPAR - Ignore parity errors, if - input flag
+        attrs[0] = termios.IGNPAR
+        
+        # c_oflag: 0, of - output flag
+        attrs[1] = 0
+        
+        # c_cflag: boadrate | CS8 | CLOCAL | CREAD, cf - control flags
+        attrs[2] = termios.B57600 | termios.CS8 | termios.CLOCAL | termios.CREAD
+        
+        # c_lflag: 0 (turn off echo and processing), lf - local flags
+        attrs[3] = 0
+        
+        # ispeed, ospeed - boadrate
+        attrs[4] = termios.B57600
+        attrs[5] = termios.B57600
+        
+        # cc: VTIME = 0, VMIN = 0, cc - control chars
+        attrs[6][termios.VTIME] = 0
+        attrs[6][termios.VMIN] = 0
+        
+        # Apply settings through TCSANOW (as in the C++ SDK)
+        termios.tcsetattr(portHandler.ser.fd, termios.TCSANOW, attrs)
+        print('[OK] termios settigs applied (IGNPAR, TCSANOW)')
+        
+        # Explicitly clearing the input buffer of garbage from previous runs
+        termios.tcflush(portHandler.ser.fd, termios.TCIFLUSH)
+        print('[OK] Input buffer flushed')
+    else:
+        print(f'[ERROR] Failed to open port {DEVICENAME}')
+            
+
+def blink_led(portHandler, packetHandler, count=4):
+    """Flashing the LED a specified number of times"""
+    for i in range(count):
+        print(f'\nBlink {i+1}/{count}')    
+        packetHandler.write1ByteTxRx(portHandler, SERVO_ID, SERVO_REG_LED_STATUS, LED_ON)
+        print("    LED: On")
+        led_debug_info('LED On error code: ', portHandler, packetHandler)
+        time.sleep(1)
+        
+        packetHandler.write1ByteTxRx(portHandler, SERVO_ID, SERVO_REG_LED_STATUS, LED_OFF)
+        print("    LED: Off")
+        led_debug_info('LED Off error code: ', portHandler, packetHandler)
+        time.sleep(1)
 
 if __name__ == "__main__":
     main()
